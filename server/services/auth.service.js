@@ -1,8 +1,11 @@
 import { findRoleByName } from "../controllers/roles.controller.js";
+import Role from "../models/Role.model.js";
 import User from "../models/User.model.js";
+import { errorHandler } from "../utils/errorHandler.js";
 import { generateAuthToken } from "../utils/generateAuthToken.js";
 import { getRoleByName } from "./role.service.js";
 import { getUserByEmail } from "./user.service.js";
+
 
 export const signUpUser = async (formData, res) => {
   try {
