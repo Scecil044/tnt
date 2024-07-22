@@ -28,6 +28,7 @@ const UserSchema = new mongoose.Schema(
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
     password: { type: String, minLength: 6 },
+    likedPosts:[{type:mongoose.Schema.Types.ObjectId, ref:"User", default:[]}],
     isDeleted: { type: Boolean, default: false }
   },
   { timestamps: true }

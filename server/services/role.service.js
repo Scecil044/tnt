@@ -43,7 +43,6 @@ export const getRoleByName = async roleName => {
     const searchRegex = new RegExp(roleName, "i");
     const role = await Role.findOne({ roleName: searchRegex, isDeleted: false }).select("roleName");
     if (!role) throw new Error("Unable to find role by the provided name");
-    console.log("found role", role)
     return role;
   } catch (error) {
     console.log(error);

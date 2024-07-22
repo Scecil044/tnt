@@ -4,7 +4,7 @@ import { verifyToken } from "../utils/verifyToken.js"
 
 const router = express.Router()
 
-router.get("/",verifyToken, getRoles )
+router.get("/", getRoles )
 router.get("/role-name",verifyToken,findRoleByName )
 router.post("/",verifyToken, createRole)
 
