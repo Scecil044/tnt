@@ -1,7 +1,11 @@
 import User from "../models/User.model.js";
-import { createNotification } from "./sotification.service.js";
+import { getPostById } from "./post.service.js";
+import { createNotification } from "./notification.service.js";
 import bcrypt from "bcryptjs"
 import { v2 as cloudinary } from "cloudinary";
+import { diff } from "deep-object-diff";
+import { errorHandler } from "../utils/errorHandler.js";
+
 
 export const getUserById = async userId => {
   try {
@@ -11,6 +15,19 @@ export const getUserById = async userId => {
     throw new Error(error);
   }
 };
+
+export const getUserByCredentials = async(email, password)=>{
+  try {
+    const isUser = await User.findOne({email})
+    const isMatch = await bcrypt.compare(password, isUser.password)
+    if(!isMatch) return null
+
+    return isUser
+  } catch (error) {
+    console.log(error)
+    throw new Error(error)
+  }
+}
 
 export const getUserByEmail = async email => {
   try {
@@ -157,3 +174,50 @@ export const updateUserDetails = async(reqBody, userId)=>{
     throw new Error(error)
   }
 }
+
+//get system users who have liked a particular post
+export const removePostIdFromLikedPosts = async (postId) => {
+  try {
+    const post = await getPostById(postId);
+    console.log("the post", post)
+    if (!post || !post.likes || post.likes.length === 0) {
+      return post;
+    }
+
+    await Promise.all(post.likes.map(async (userId) => {
+      await User.findByIdAndUpdate(
+        userId,
+        { $pull: { likedPosts: postId } },
+        { new: true }
+      );
+    }));
+
+    return post;
+  } catch (error) {
+    console.error('Error removing postId from likedPosts:', error);
+    throw error;
+  }
+}
+
+// export const updateUserTest = async(reqBody, userId)=>{
+//   try {
+//     const isUser = await getUserById(userId)
+//     if(!isUser) return errorHandler(404, "User not found")
+//     const updatables = {...reqBody}
+//     if(reqBody.salary && reqBody){
+//       const fieldsToUpdate = diff(isUser.salary, reqBody.salary)
+//       updatables = {
+//         ...reqBody,
+//         $push:{
+//           salary_change_log:{
+//             salary:reqBody.salary
+//           }
+//         }
+//       }
+//     }
+
+//   } catch (error) {
+//     console.log(error)
+//     throw error
+//   }
+// }

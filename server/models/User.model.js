@@ -1,7 +1,11 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import validator from "validator";
-import mongoosePaginate from "mongoose-paginate-v2";
+import mongoosePaginate from "mongoose-paginate-v2"
+import { logger } from "../utils/winstonLogger.js";
+import moment from "moment";
+import jwt from "jsonwebtoken"
+import Token from "./Token.model.js";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -49,6 +53,54 @@ UserSchema.pre("save", async function(next) {
 UserSchema.methods.comparePassword = async function(passwd) {
   return await bcrypt.compare(passwd, this.password);
 };
+
+
+UserSchema.methods.generateAuthTokens = async function(){
+  const user = this
+
+  const accessTokenExpires = moment().add(process.env.JWT_ACCESS_EXPIRATION_MINUTES, "minutes")
+  const accessPayload = {
+    _id:user._id,
+    role:user.role,
+    iat:moment().unix(),
+    exp: accessTokenExpires.unix(),
+    type:"access"
+  }
+  const accessToken = jwt.sign(accessPayload, process.env.JWT_SECRET)
+
+  const refreshTokenExpires = moment().add(process.env.REFRESH_EXPIRATION_DAYS, "days")
+  const refreshPayload ={
+    _id:user._id,
+    role:user.role,
+    iat:moment().unix(),
+    exp:refreshTokenExpires.unix(),
+    type:"refresh"
+  }
+  const refreshToken = jwt.sign(refreshPayload, process.env.JWT_SECRET)
+
+  let token ={
+    isBlackListed:false,
+    token:refreshToken,
+    user:user._id,
+    type:"refresh",
+    expores:refreshTokenExpires
+  }
+  let createdToken = new Token(token)
+  await createdToken.save()
+
+  return{
+    access:{
+      token:accessToken,
+      expires:accessTokenExpires.toDate()
+    },
+    refresh:{
+      token:refreshToken,
+      expires:refreshTokenExpires.toDate()
+
+    }
+  }
+}
+
 
 UserSchema.plugin(mongoosePaginate);
 const User = mongoose.model("User", UserSchema);

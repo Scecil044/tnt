@@ -1,13 +1,20 @@
+import { createLog } from "../services/log.service.js";
 import { follow, getSuggestedUsers, getSystemUsers, getUserById, updateUserDetails } from "../services/user.service.js";
 import { errorHandler } from "../utils/errorHandler.js";
+import { logger } from "../utils/winstonLogger.js";
 
 export const getUser = async(req,res,next)=>{
     try {
         const response = await getUserById(req.params.userId)
         if(!response) return next(errorHandler(400, "could not find user by the provided id"))
+        const logString = logger.info(`${req.user.firstName} ${req.user.lastName} Accessed get user route`).transports[0].logString
+        await createLog("Users", req.user._id, logString)
         res.status(200).json(response)
     } catch (error) {
         console.log(error.mesage)
+        // const logString = logger.error(`${req.user.firstName} ${req.user.lastName} Failed to Access get User route, encountered following error => ${error}`)
+        // .transports[0].logString;
+        // await createLog('users', req.user._id, logString);
         next(error)
     }
 }
