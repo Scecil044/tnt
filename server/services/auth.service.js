@@ -1,3 +1,4 @@
+import { validateUser } from "../config/config.js";
 import { tokenTypes } from "../config/token.js";
 import Token from "../models/Token.model.js";
 import User from "../models/User.model.js";
@@ -10,6 +11,10 @@ import { getUserByCredentials, getUserByEmail, getUserById } from "./user.servic
 export const signUpUser = async (formData, res) => {
   try {
     console.log(formData);
+    const {customeError} = validateUser(formData)
+    if (customeError) {
+      throw new Error(`Validation error: ${customeError.details.map(x => x.message).join(', ')}`);
+    }
     // check if user exists
     const isUser = await getUserByEmail(formData.email);
     if (isUser) throw new Error("The email entered has been blacklisted or is already taken");
