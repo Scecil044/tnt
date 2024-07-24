@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import validator from "validator";
 import mongoosePaginate from "mongoose-paginate-v2"
-import { logger } from "../utils/winstonLogger.js";
 import moment from "moment";
 import jwt from "jsonwebtoken"
 import Token from "./Token.model.js";
@@ -33,7 +32,9 @@ const UserSchema = new mongoose.Schema(
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
     password: { type: String, minLength: 6 },
     likedPosts:[{type:mongoose.Schema.Types.ObjectId, ref:"User", default:[]}],
-    isDeleted: { type: Boolean, default: false }
+    isDeleted: { type: Boolean, default: false },
+    firstLogin:{type:Boolean, default:true},
+    role_change_log:{type:Array, default:[]}
   },
   { timestamps: true }
 );

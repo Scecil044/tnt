@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs"
 import { v2 as cloudinary } from "cloudinary";
 import { diff } from "deep-object-diff";
 import { errorHandler } from "../utils/errorHandler.js";
+import { getRoleByName } from "./role.service.js";
+import moment from "moment-timezone";
 
 
 export const getUserById = async userId => {
@@ -141,9 +143,9 @@ export const getSuggestedUsers = async userId => {
   }
 };
 
-export const updateUserDetails = async(reqBody, userId)=>{
+export const updateUserDetails = async(reqBody, userId, reqUser)=>{
   try {
-    console.log(reqBody)
+    let fieldsToUpdate = {...reqBody}
     const user = await User.findById(userId).where({isDeleted:false})
     const {password, currentPassword, profilePicture, coverPhoto} = reqBody
     // check if passwords exist in reqBody
@@ -152,25 +154,47 @@ export const updateUserDetails = async(reqBody, userId)=>{
       const isMatch = await bcrypt.compare(currentPassword, user.password)
       if(!isMatch) throw new Error("Please enter your valid password")
       }
-    const updates = Object.keys(reqBody)
+    if(reqBody && reqBody.role){
+      console.log("lets go")
+      let updatedFields = diff(user.role, reqBody.role)
+      console.log(updatedFields, "the difference")
+      const systemRole = await getRoleByName(reqBody.role)
+      
+      if(!systemRole) throw new Error("could not find role")
+        fieldsToUpdate = {
+        ...reqBody,
+        role:systemRole._id,
+          role_change_log:{
+            role:systemRole._id,
+            updatedBy:reqUser._id,
+            message:`Role updated to ${updatedFields}`,
+            status:"complete",
+            updated_on:moment.tz('UTC').tz('Africa/Nairobi').format()
+          },
+      }
+    }
+    console.log(fieldsToUpdate, "the new reqbody")
+    const updates = Object.keys(fieldsToUpdate)
     updates.forEach((update)=>{
-      user[update] = reqBody[update]
+      user[update] = fieldsToUpdate[update]
     })
-    if(profilePicture){
-      const data =await cloudinary.uploader.upload(profilePicture)
-      const profileImgLink = data.secure_url
-      user.profilePicture = profileImgLink
-    }
-    if(coverPhoto){
-      const data =await cloudinary.uploader.upload(coverPhoto)
-      const coverImgLink = data.secure_url
-      user.coverPhoto = coverImgLink
-    }
+    // if(profilePicture){
+    //   const data =await cloudinary.uploader.upload(profilePicture)
+    //   const profileImgLink = data.secure_url
+    //   user.profilePicture = profileImgLink
+    // }
+    // if(coverPhoto){
+    //   const data =await cloudinary.uploader.upload(coverPhoto)
+    //   const coverImgLink = data.secure_url
+    //   user.coverPhoto = coverImgLink
+    // }
+  
     await user.save()
     const userObject = user.toObject()
     delete userObject.password
     return userObject
   } catch (error) {
+    console.log(error)
     throw new Error(error)
   }
 }

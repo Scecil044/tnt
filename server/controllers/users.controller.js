@@ -31,10 +31,12 @@ export const getUsers = async(req,res,next)=>{
 
 export const updateCurrentUser = async(req,res,next)=>{
     try {
-        const response = await updateUserDetails(req.body, req.params.userId)
+        console.log(req.user, "the user")
+        const response = await updateUserDetails(req.body, req.params.userId, req.user)
         if(!response) return next(errorHandler(400, "could not update user details"))
         res.status(200).json(response)
     } catch (error) {
+        console.log(error)
         throw new Error(error)
     }
 }

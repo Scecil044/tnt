@@ -8,6 +8,6 @@ router.get("/:userId",verifyToken, getUser)
 router.get("/", verifyToken, getUsers)
 router.get("/suggested/followers", verifyToken, suggestedUsers)
 router.get("/follow/:userId",verifyToken, followUserAndUnfollowUser)
-router.put("/:userId", updateCurrentUser)
+router.put("/:userId",verifyToken, updateCurrentUser)
 
 export default router
